@@ -76,6 +76,26 @@ struct SchoolEmail {
     class: Option<char>,
 }
 
+impl SchoolEmail {
+    // if the email belongs to the student, this determines
+    // the length of their course in years (currently 4 or 5)
+    fn get_year_count(&self) -> Option<i32> {
+        if let Some(class) = self.class {
+            if ['A', 'E', 'F'].contains(&class) {
+                return Some(5);
+            }
+
+            if ['B', 'C', 'D'].contains(&class) {
+                return Some(4);
+            }
+
+            unreachable!()
+        } else {
+            None
+        }
+    }
+}
+
 // DB default tree: User::id => User
 // DB tokens tree: token => User::id
 // DB points tree: class => Vec<Points>

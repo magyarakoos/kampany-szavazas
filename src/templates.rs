@@ -166,8 +166,8 @@ impl VoteBase {
             }
         }
 
-        // filter out participating students
-        if VoteProhibited::participating(&user.email) {
+        // filter out participating students and former students
+        if VoteProhibited::is_voting_prohibited(&user.email) {
             return Err(Redirect::to("/vote/prohibited"));
         }
 
@@ -252,7 +252,7 @@ impl VoteClosed {
 #[template(path = "vote/prohibited.html")]
 pub struct VoteProhibited;
 impl VoteProhibited {
-    pub fn participating(email_str: &str) -> bool {
+    pub fn is_voting_prohibited(email_str: &str) -> bool {
         match email_str.parse::<crate::SchoolEmail>() {
             Ok(email) => {
                 // teacher => can always vote
@@ -264,6 +264,13 @@ impl VoteProhibited {
                 let current_year = chrono::Utc::now().year();
                 if (year as i32) + 2000 + 3 == current_year {
                     return true;
+                }
+
+                // former student => can't vote
+                if let Some(year_count) = email.get_year_count() {
+                    if (year as i32) + year_count < current_year {
+                        return true;
+                    }
                 }
 
                 // (presumably) other student => can vote
@@ -278,7 +285,7 @@ impl VoteProhibited {
     }
 
     pub async fn get(Extension(user): Extension<User>) -> impl IntoResponse {
-        if Self::participating(&user.email) {
+        if Self::is_voting_prohibited(&user.email) {
             Ok(Self)
         } else {
             Err(Redirect::to("/vote"))

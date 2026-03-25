@@ -267,8 +267,13 @@ impl VoteProhibited {
                 }
 
                 // former student => can't vote
-                if let Some(year_count) = email.get_year_count() {
-                    if (year as i32) + year_count < current_year {
+                if let Ok(maybe_year_count) = email.get_year_count() {
+                    if let Some(year_count) = maybe_year_count {
+                        if (year as i32) + 2000 + year_count < current_year {
+                            return true;
+                        }
+                    } else {
+                        // couldn't get year count => can't vote (will have to report bug)
                         return true;
                     }
                 }

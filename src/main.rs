@@ -3,6 +3,7 @@ mod templates;
 
 #[macro_use]
 extern crate log;
+use anyhow::anyhow;
 use axum::{
     extract::State,
     middleware::{from_fn, from_fn_with_state},
@@ -79,19 +80,19 @@ struct SchoolEmail {
 impl SchoolEmail {
     // if the email belongs to the student, this determines
     // the length of their course in years (currently 4 or 5)
-    fn get_year_count(&self) -> Option<i32> {
+    fn get_year_count(&self) -> anyhow::Result<Option<i32>> {
         if let Some(class) = self.class {
-            if ['A', 'E', 'F'].contains(&class) {
-                return Some(5);
+            if ['a', 'e', 'f'].contains(&class) {
+                return Ok(Some(5));
             }
 
-            if ['B', 'C', 'D'].contains(&class) {
-                return Some(4);
+            if ['b', 'c', 'd'].contains(&class) {
+                return Ok(Some(4));
             }
 
-            unreachable!()
+            Err(anyhow!(format!("Unknwon class: {}", class)))
         } else {
-            None
+            Ok(None)
         }
     }
 }
@@ -131,11 +132,14 @@ async fn main() -> anyhow::Result<()> {
         env::set_var("RUST_LOG", "kampany_szavazas=debug");
     }
     env_logger::init();
-    if let Ok(f) = envfile {
-        info!("Config loaded from {f:?}");
+
+    match envfile {
+        Ok(f) => info!("Config loaded from {:?}", f),
+        Err(e) => error!("Error while loading envfile: {:?}", e),
     }
 
     let config = envy::from_env::<Config>()?;
+    info!("Loaded config: {:?}", config);
 
     let db: sled::Db = sled::open(&config.db_path).unwrap();
 

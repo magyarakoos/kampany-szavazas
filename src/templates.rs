@@ -272,10 +272,10 @@ impl VoteProhibited {
                         if (year as i32) + 2000 + year_count < current_year {
                             return true;
                         }
-                    } else {
-                        // couldn't get year count => can't vote (will have to report bug)
-                        return true;
                     }
+                } else {
+                    // couldn't get year count => can't vote (will have to report bug)
+                    return true;
                 }
 
                 // (presumably) other student => can vote
